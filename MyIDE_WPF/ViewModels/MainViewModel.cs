@@ -49,7 +49,7 @@ namespace MyIDE_WPF.ViewModels
             }
         }
 
-        private ProgramInteractionViewModel programInteraction;
+        private ProgramInteractionViewModel programInteraction = new ProgramInteractionViewModel();
 
         public ProgramInteractionViewModel ProgramInteraction
         {
@@ -79,9 +79,21 @@ namespace MyIDE_WPF.ViewModels
             DecreaseFontSizeCommand = new MyCommand((parameter) => DecreaseFontSize(), CanDecreaseFontSize);
 
             runner = new PythonRunner();
-            runner.OutputReceived += Runner_OutputReceived;
-            runner.ErrorReceived += Runner_ErrorReceived;
+            runner.Output += Runner_OutputReceived;
+            runner.Error += Runner_ErrorReceived;
             runner.Terminated += Runner_Terminated;
+            runner.Input += Runner_Input;
+        }
+
+        private void Runner_Input(object sender, InputEventArgs e)
+        {
+            App.Current.Dispatcher.Invoke(() =>
+            {
+                programInteraction.OutputText(e.Prompt + " ");
+                string input = "Andrew";
+                runner.SubmitInput(input);
+                programInteraction.OutputText(input + Environment.NewLine);
+            });
         }
 
         private int GetNextBiggestFontSize(int currentFontSize)
@@ -152,6 +164,10 @@ namespace MyIDE_WPF.ViewModels
             programCode.IsRunning = IsRunning;
             RunCommand.RaiseCanExecuteChanged();
             StopCommand.RaiseCanExecuteChanged();
+
+            // Save the user's code for next time
+            ProgramCode.SyncCodeToViewModel();
+            Properties.Settings.Default.Code = ProgramCode.Code;
         }
 
         private void Stop()
@@ -159,14 +175,14 @@ namespace MyIDE_WPF.ViewModels
             runner.TerminateRun();
         }
 
-        private void Runner_OutputReceived(object sender, Models.DataReceivedEventArgs e)
+        private void Runner_OutputReceived(object sender, OutputEventArgs e)
         {
-            App.Current.Dispatcher.Invoke(() => programInteraction.OutputText(e.Data));
+            App.Current.Dispatcher.Invoke(() => programInteraction.OutputText(e.Text));
         }
 
-        private void Runner_ErrorReceived(object sender, Models.DataReceivedEventArgs e)
+        private void Runner_ErrorReceived(object sender, ErrorMessageEventArgs e)
         {
-            App.Current.Dispatcher.Invoke(() => programInteraction.OutputErrorMessage(e.Data));
+            App.Current.Dispatcher.Invoke(() => programInteraction.OutputErrorMessage(e.ErrorMessage));
         }
 
         private void Runner_Terminated(object sender, EventArgs e)

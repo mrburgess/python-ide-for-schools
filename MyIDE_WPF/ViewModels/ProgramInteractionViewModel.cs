@@ -60,7 +60,7 @@ namespace MyIDE_WPF.ViewModels
         public void OutputErrorMessage(string message)
         {
             atStartOfLine = true;
-            lines.Add(message);
+            lines.Add(message.Trim(Environment.NewLine.ToCharArray()));
         }
     }
 }

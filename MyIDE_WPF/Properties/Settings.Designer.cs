@@ -82,5 +82,17 @@ namespace MyIDE_WPF.Properties {
                 this["WindowState"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("print(\"Hello\")")]
+        public string Code {
+            get {
+                return ((string)(this["Code"]));
+            }
+            set {
+                this["Code"] = value;
+            }
+        }
     }
 }

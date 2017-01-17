@@ -1,4 +1,5 @@
-﻿using MyIDE_WPF.ViewModels;
+﻿using MyIDE_WPF.Models;
+using MyIDE_WPF.ViewModels;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -21,24 +22,26 @@ namespace MyIDE_WPF.Views
     /// </summary>
     public partial class MainWindow : Window
     {
+        MainViewModel model;
+
         public MainWindow()
         {
             InitializeComponent();
 
-            MainViewModel vm = new MainViewModel();
-
-            vm.ProgramCode.Code = "print(\"Hello\")";
-
-            this.DataContext = vm;
+            model = new MainViewModel();
+            this.DataContext = model;
         }
 
-        private void Grid_Loaded(object sender, RoutedEventArgs e)
+        private void Window_Loaded(object sender, RoutedEventArgs e)
         {
             // Never start the application minimised - the user won't be able to find it!
             if (Properties.Settings.Default.WindowState == "Minimized")
             {
                 Properties.Settings.Default.WindowState = "Normal";
             }
+
+            // Restore the code to what the user was working on last time...
+            model.ProgramCode.Code = Properties.Settings.Default.Code;
         }
     }
 }

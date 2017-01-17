@@ -19,25 +19,53 @@ namespace MyIDE_WPF.Models
         }
     }
 
+    public class CommandReceivedEventArgs : EventArgs
+    {
+        public string Command { get; private set; }
+
+        public CommandReceivedEventArgs(string command)
+        {
+            this.Command = command;
+        }
+    }
+
     class AsyncReader
     {
         private Stream stream;
         TimeSpan bufferTimeout;
+        private bool processCommands;
+        private char startCommandChar;
+        private char endCommandChar;
 
         public AsyncReader(Stream stream, TimeSpan bufferTimeout)
         {
             this.stream = stream;
             this.bufferTimeout = bufferTimeout;
+            this.processCommands = false;
+        }
+
+        public AsyncReader(Stream stream, TimeSpan bufferTimeout, char startCommandChar, char endCommandChar)
+        {
+            this.stream = stream;
+            this.bufferTimeout = bufferTimeout;
+            this.startCommandChar = startCommandChar;
+            this.endCommandChar = endCommandChar;
+            this.processCommands = true;
         }
 
         public event EventHandler<DataReceivedEventArgs> DataReceived;
 
-        public void BeginReadData()
+        public event EventHandler<CommandReceivedEventArgs> CommandReceived;
+
+        public void BeginRead()
         {
             Task.Run(async () =>
             {
-                byte[] buffer = new byte[200000];
-                StringBuilder sb = new StringBuilder(200000);
+                byte[] buffer = new byte[100000];
+                StringBuilder sbOutput = new StringBuilder(buffer.Length);
+                StringBuilder sbCommand = new StringBuilder(1000);
+
+                bool inCommandMode = false;
 
                 while (true)
                 {
@@ -49,20 +77,36 @@ namespace MyIDE_WPF.Models
                         {
                             char c = Convert.ToChar(buffer[i]);
 
-                            if (c == '\r')
+                            if (c == startCommandChar && processCommands)
                             {
-                                sb.Append(Environment.NewLine);
-                                OnDataReceived(sb.ToString());
-                                sb.Clear();
+                                inCommandMode = true;
                                 continue;
+                            }
+                            else if (c == endCommandChar && processCommands)
+                            {
+                                OnCommandReceived(sbCommand.ToString());
+                                sbCommand.Clear();
+                                inCommandMode = false;
+                                continue;
+                            }
+                            else if (inCommandMode)
+                            {
+                                sbCommand.Append(c);
+                                continue;
+                            }
+                            else if (c == '\r')
+                            {
+                                sbOutput.Append(Environment.NewLine);
+                                OnDataReceived(sbOutput.ToString());
+                                sbOutput.Clear();
                             }
                             else if (c == '\n')
                             {
-                                continue;
+                                // Just eat it
                             }
                             else
                             {
-                                sb.Append(c);
+                                sbOutput.Append(c);
                             }
                         }
                     }
@@ -71,13 +115,21 @@ namespace MyIDE_WPF.Models
                         await Task.Delay(bufferTimeout);
                     }
 
-                    if (sb.Length > 0)
+                    if (sbOutput.Length > 0)
                     {
-                        OnDataReceived(sb.ToString());
-                        sb.Clear();
+                        OnDataReceived(sbOutput.ToString());
+                        sbOutput.Clear();
                     }
                 }
             });
+        }
+
+        private void OnCommandReceived(string command)
+        {
+            if (CommandReceived != null)
+            {
+                CommandReceived(this, new CommandReceivedEventArgs(command));
+            }
         }
 
         private void OnDataReceived(string data)

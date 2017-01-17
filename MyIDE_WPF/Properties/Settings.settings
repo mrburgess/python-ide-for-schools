@@ -17,5 +17,8 @@
     <Setting Name="WindowState" Type="System.String" Scope="User">
       <Value Profile="(Default)">Normal</Value>
     </Setting>
+    <Setting Name="Code" Type="System.String" Scope="User">
+      <Value Profile="(Default)">print("Hello")</Value>
+    </Setting>
   </Settings>
 </SettingsFile>

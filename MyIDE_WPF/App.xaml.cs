@@ -1,4 +1,5 @@
-﻿using MyIDE_WPF.Properties;
+﻿using MyIDE_WPF.Models;
+using MyIDE_WPF.Properties;
 using System;
 using System.Collections.Generic;
 using System.Configuration;
@@ -19,6 +20,7 @@ namespace MyIDE_WPF
             // Save any preference changes made by the user while running the app
             Settings.Default.Save();
         }
+
     }
 }
 
