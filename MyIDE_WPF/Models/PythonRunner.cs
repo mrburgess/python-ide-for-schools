@@ -9,31 +9,31 @@ using System.Threading.Tasks;
 
 namespace MyIDE_WPF.Models
 {
-    public class OutputEventArgs : EventArgs
+    public class RunnerOutputEventArgs : EventArgs
     {
         public string Text { get; private set; }
 
-        public OutputEventArgs(string text)
+        public RunnerOutputEventArgs(string text)
         {
             this.Text = text;
         }
     }
 
-    public class ErrorMessageEventArgs : EventArgs
+    public class RunnerErrorMessageEventArgs : EventArgs
     {
         public string ErrorMessage { get; private set; }
 
-        public ErrorMessageEventArgs(string errorMessage)
+        public RunnerErrorMessageEventArgs(string errorMessage)
         {
             this.ErrorMessage = errorMessage;
         }
     }
 
-    public class InputEventArgs : EventArgs
+    public class RunnerInputEventArgs : EventArgs
     {
         public string Prompt { get; private set; }
 
-        public InputEventArgs(string prompt)
+        public RunnerInputEventArgs(string prompt)
         {
             this.Prompt = prompt;
         }
@@ -41,10 +41,10 @@ namespace MyIDE_WPF.Models
 
     public class PythonRunner
     {
-        public event EventHandler<ErrorMessageEventArgs> Error;
-        public event EventHandler<OutputEventArgs> Output;
+        public event EventHandler<RunnerErrorMessageEventArgs> Error;
+        public event EventHandler<RunnerOutputEventArgs> Output;
         public event EventHandler<EventArgs> Terminated;
-        public event EventHandler<InputEventArgs> Input;
+        public event EventHandler<RunnerInputEventArgs> Input;
 
         private Process pythonProcess;
 
@@ -78,9 +78,29 @@ namespace MyIDE_WPF.Models
             }
         }
 
+        private string InstrumentCode(string originalCode)
+        {
+            StringBuilder sb = new StringBuilder();
+
+            sb.AppendLine("import sys");
+            sb.AppendLine();
+            sb.AppendLine("def my_input(prompt=''):");
+            sb.AppendLine("  print(chr(17) + 'INPUT:' + prompt + chr(18), end='')");
+            sb.AppendLine("  sys.stdout.flush()");
+            sb.AppendLine("  return sys.stdin.readline()");
+            sb.AppendLine();
+            sb.AppendLine("__builtins__.input = my_input");
+            sb.AppendLine();
+            sb.Append(originalCode);
+
+            return sb.ToString();
+        }
+
         public void BeginRun(string programCode)
         {
-            File.WriteAllText("temp.py", programCode);
+            string instrumentedCode = InstrumentCode(programCode);
+
+            File.WriteAllText("temp.py", instrumentedCode);
 
             ProcessStartInfo pythonStartInfo = new ProcessStartInfo("python.exe", "-u temp.py")
             {
@@ -156,7 +176,7 @@ namespace MyIDE_WPF.Models
         {
             if (Error != null)
             {
-                Error(this, new ErrorMessageEventArgs(errorMessage));
+                Error(this, new RunnerErrorMessageEventArgs(errorMessage));
             }
         }
 
@@ -164,7 +184,7 @@ namespace MyIDE_WPF.Models
         {
             if (Output != null)
             {
-                Output(this, new OutputEventArgs(text));
+                Output(this, new RunnerOutputEventArgs(text));
             }
         }
 
@@ -172,7 +192,7 @@ namespace MyIDE_WPF.Models
         {
             if (Input != null)
             {
-                Input(this, new InputEventArgs(prompt));
+                Input(this, new RunnerInputEventArgs(prompt));
             }
         }
     }

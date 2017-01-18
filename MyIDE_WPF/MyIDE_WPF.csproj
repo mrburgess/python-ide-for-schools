@@ -66,16 +66,24 @@
     </ApplicationDefinition>
     <Compile Include="Models\AsyncReader.cs" />
     <Compile Include="Models\PythonRunner.cs" />
+    <Compile Include="ViewModels\InputViewModel.cs" />
     <Compile Include="ViewModels\ViewModelBase.cs" />
     <Compile Include="ViewModels\MainViewModel.cs" />
     <Compile Include="ViewModels\MyCommand.cs" />
     <Compile Include="ViewModels\ProgramCodeViewModel.cs" />
+    <Compile Include="Views\InputView.xaml.cs">
+      <DependentUpon>InputView.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Views\ProgramCodeView.xaml.cs">
       <DependentUpon>ProgramCodeView.xaml</DependentUpon>
     </Compile>
     <Compile Include="Views\ProgramInteractionView.xaml.cs">
       <DependentUpon>ProgramInteractionView.xaml</DependentUpon>
     </Compile>
+    <Page Include="Views\InputView.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="Views\MainWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>

@@ -17,49 +17,49 @@ namespace MyIDE_WPF.ViewModels
         private const int MinimumFontSize = 8;
         private const int MaximumFontSize = 36;
 
-        private int[] fontSizes = new int[] { 8, 10, 12, 14, 16, 18, 20, 24, 36, 48, 72 };
+        private int[] _fontSizes = new int[] { 8, 10, 12, 14, 16, 18, 20, 24, 36, 48, 72 };
 
-        private ProgramCodeViewModel programCode = new ProgramCodeViewModel();
+        private ProgramCodeViewModel _programCode = new ProgramCodeViewModel();
 
         public ProgramCodeViewModel ProgramCode
         {
             get
             {
-                return this.programCode;
+                return this._programCode;
             }
             set
             {
-                this.programCode = value;
+                this._programCode = value;
                 OnPropertyChanged(nameof(ProgramCode));
             }
         }
 
-        private bool isRunning = false;
+        private bool _isRunning = false;
 
         public bool IsRunning
         {
             get
             {
-                return this.isRunning;
+                return this._isRunning;
             }
             set
             {
-                this.isRunning = value;
+                this._isRunning = value;
                 OnPropertyChanged(nameof(IsRunning));
             }
         }
 
-        private ProgramInteractionViewModel programInteraction = new ProgramInteractionViewModel();
+        private ProgramInteractionViewModel _programInteraction = new ProgramInteractionViewModel();
 
         public ProgramInteractionViewModel ProgramInteraction
         {
             get
             {
-                return this.programInteraction;
+                return this._programInteraction;
             }
             set
             {
-                this.programInteraction = value;
+                this._programInteraction = value;
                 OnPropertyChanged(nameof(ProgramInteraction));
             }
         }
@@ -83,28 +83,46 @@ namespace MyIDE_WPF.ViewModels
             runner.Error += Runner_ErrorReceived;
             runner.Terminated += Runner_Terminated;
             runner.Input += Runner_Input;
+
+            ProgramInteraction.Input += ProgramInteraction_Input;
         }
 
-        private void Runner_Input(object sender, InputEventArgs e)
+        private void ProgramInteraction_Input(object sender, InputEventArgs e)
         {
+            // The user has sumbitted an answer to the interactive input prompt
+            // So hide the input box
+            ProgramInteraction.HideInputPrompt();
+
+            // Copy the prompt and the user's answer into the output window
+            if (e.Prompt != "")
+                ProgramInteraction.OutputText(e.Prompt + " ");
+            ProgramInteraction.OutputText(e.Answer);
+            ProgramInteraction.OutputText(Environment.NewLine);
+
+            // Submit the user's answer to the Python program, so it can continue
+            runner.SubmitInput(e.Answer);
+        }
+
+        private void Runner_Input(object sender, RunnerInputEventArgs e)
+        {
+            // The Python program has requested input from the user
             App.Current.Dispatcher.Invoke(() =>
             {
-                programInteraction.OutputText(e.Prompt + " ");
-                string input = "Andrew";
-                runner.SubmitInput(input);
-                programInteraction.OutputText(input + Environment.NewLine);
+                // Show the input box to the user, with the appropriate prompt
+                // TO DO: Set the input focus to the text box?
+                ProgramInteraction.ShowInputPrompt(e.Prompt);
             });
         }
 
         private int GetNextBiggestFontSize(int currentFontSize)
         {
-            int next = fontSizes.FirstOrDefault(s => s > currentFontSize);
+            int next = _fontSizes.FirstOrDefault(s => s > currentFontSize);
             return next > 0 ? next : currentFontSize;
         }
 
         private int GetNextSmallestFontSize(int currentFontSize)
         {
-            int next = fontSizes.LastOrDefault(s => s < currentFontSize);
+            int next = _fontSizes.LastOrDefault(s => s < currentFontSize);
             return next > 0 ? next : currentFontSize;
         }
 
@@ -136,12 +154,12 @@ namespace MyIDE_WPF.ViewModels
 
         private bool CanStop()
         {
-            return isRunning;
+            return _isRunning;
         }
 
         private bool CanRun()
         {
-            return !isRunning;
+            return !_isRunning;
         }
 
         private void Run()
@@ -157,11 +175,11 @@ namespace MyIDE_WPF.ViewModels
                 ProgramInteraction.Reset();
             }
 
-            programCode.SyncCodeToViewModel();
-            runner.BeginRun(programCode.Code);
+            _programCode.SyncCodeToViewModel();
+            runner.BeginRun(_programCode.Code);
 
             IsRunning = runner.IsRunning;
-            programCode.IsRunning = IsRunning;
+            _programCode.IsRunning = IsRunning;
             RunCommand.RaiseCanExecuteChanged();
             StopCommand.RaiseCanExecuteChanged();
 
@@ -172,17 +190,18 @@ namespace MyIDE_WPF.ViewModels
 
         private void Stop()
         {
+            ProgramInteraction.HideInputPrompt();
             runner.TerminateRun();
         }
 
-        private void Runner_OutputReceived(object sender, OutputEventArgs e)
+        private void Runner_OutputReceived(object sender, RunnerOutputEventArgs e)
         {
-            App.Current.Dispatcher.Invoke(() => programInteraction.OutputText(e.Text));
+            App.Current.Dispatcher.Invoke(() => _programInteraction.OutputText(e.Text));
         }
 
-        private void Runner_ErrorReceived(object sender, ErrorMessageEventArgs e)
+        private void Runner_ErrorReceived(object sender, RunnerErrorMessageEventArgs e)
         {
-            App.Current.Dispatcher.Invoke(() => programInteraction.OutputErrorMessage(e.ErrorMessage));
+            App.Current.Dispatcher.Invoke(() => _programInteraction.OutputErrorMessage(e.ErrorMessage));
         }
 
         private void Runner_Terminated(object sender, EventArgs e)
@@ -190,7 +209,7 @@ namespace MyIDE_WPF.ViewModels
             App.Current.Dispatcher.Invoke(() =>
             {
                 IsRunning = runner.IsRunning;
-                programCode.IsRunning = IsRunning;
+                _programCode.IsRunning = IsRunning;
                 RunCommand.RaiseCanExecuteChanged();
                 StopCommand.RaiseCanExecuteChanged();
             });
