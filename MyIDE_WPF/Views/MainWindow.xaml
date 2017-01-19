@@ -11,6 +11,8 @@
         Title="MainWindow"
         Height="{Binding Source={x:Static p:Settings.Default}, Path=Height, Mode=TwoWay}"
         Width="{Binding Source={x:Static p:Settings.Default}, Path=Width, Mode=TwoWay}"
+        FontFamily="{Binding Source={x:Static p:Settings.Default}, Path=CodeFontFamily}"
+        FontSize="{Binding Source={x:Static p:Settings.Default}, Path=CodeFontSize}"
         WindowState="{Binding Source={x:Static p:Settings.Default}, Path=WindowState, Mode=TwoWay}" Loaded="Window_Loaded">
     <Window.InputBindings>
         <KeyBinding Command="{Binding RunCommand}" Key="F5"/>

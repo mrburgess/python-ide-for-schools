@@ -15,8 +15,6 @@
             FontSize="{Binding Settings.CodeFontSize}"
             Text="{Binding Code}" />-->
         <icsc:TextEditor x:Name="MyEditor"
-                         FontFamily="{Binding Source={x:Static p:Settings.Default}, Path=CodeFontFamily, Mode=TwoWay}"
-                         FontSize="{Binding Source={x:Static p:Settings.Default}, Path=CodeFontSize, Mode=TwoWay}"
                          BorderThickness="0" Loaded="TextEditor_Loaded"
                          ShowLineNumbers="True"
                          HorizontalScrollBarVisibility="Auto"

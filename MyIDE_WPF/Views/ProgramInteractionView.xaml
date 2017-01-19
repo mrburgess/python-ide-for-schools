@@ -20,8 +20,6 @@
         </Grid.RowDefinitions>
         <icsc:TextEditor Grid.Row="0"
                         Name="Console" WordWrap="True"
-                        FontFamily="{Binding Source={x:Static p:Settings.Default}, Path=CodeFontFamily, Mode=TwoWay}"
-                        FontSize="{Binding Source={x:Static p:Settings.Default}, Path=CodeFontSize, Mode=TwoWay}"
                         IsReadOnly="True" VerticalScrollBarVisibility="Auto"
                         BorderThickness="0">
         </icsc:TextEditor>

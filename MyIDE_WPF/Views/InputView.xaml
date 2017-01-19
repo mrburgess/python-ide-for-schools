@@ -5,11 +5,11 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:local="clr-namespace:MyIDE_WPF.Views"
              xmlns:vm="clr-namespace:MyIDE_WPF.ViewModels"
+             xmlns:p="clr-namespace:MyIDE_WPF.Properties"
              mc:Ignorable="d" 
              d:DesignHeight="300" d:DesignWidth="300"
-             d:DataContext="{Binding Source={StaticResource DesignData}}" IsVisibleChanged="UserControl_IsVisibleChanged"
-             Name="_this">
-        <UserControl.Resources>
+             d:DataContext="{Binding Source={StaticResource DesignData}}" IsVisibleChanged="UserControl_IsVisibleChanged">
+    <UserControl.Resources>
         <ResourceDictionary>
             <vm:InputViewModel x:Key="DesignData" Prompt="What is your name?" Answer="Andrew" />
         </ResourceDictionary>
@@ -27,9 +27,6 @@
                     <KeyBinding Command="{Binding SubmitCommand}" Key="Return" />
                 </TextBox.InputBindings>
             </TextBox>
-            <!--<Button Content="OK" Width="Auto" HorizontalAlignment="Right" IsDefault="True"
-                Padding="20,4,20,4" Margin="0,10,0,0" BorderThickness="2"
-                Command="{Binding SubmitCommand}" />-->
         </StackPanel>
     </Grid>
 </UserControl>
