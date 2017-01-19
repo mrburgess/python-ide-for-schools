@@ -125,43 +125,42 @@ namespace MyIDE_WPF.Models
 
             IsRunning = true;
 
-            var dataAndCommandReader = new AsyncReader(
-                pythonProcess.StandardOutput.BaseStream, BufferTimeout, (char)0x11, (char)0x12);
+            var outputReader = new AsyncReader(
+                pythonProcess.StandardOutput.BaseStream, BufferTimeout, detectMessages:true);
 
-            dataAndCommandReader.DataReceived += OutputAndCommandReader_DataReceived;
-            dataAndCommandReader.CommandReceived += DataAndCommandReader_CommandReceived;
-            dataAndCommandReader.BeginRead();
+            outputReader.TextReceived += OutputReader_TextReceived;
+            outputReader.MessageReceived += OutputReader_MessageReceived;
+            outputReader.BeginRead();
 
-            var errorReader = new AsyncReader(pythonProcess.StandardError.BaseStream, BufferTimeout);
-            errorReader.DataReceived += ErrorReader_DataReceived;
+            var errorReader = new AsyncReader(
+                pythonProcess.StandardError.BaseStream, BufferTimeout, detectMessages:false);
+
+            errorReader.TextReceived += ErrorReader_TextReceived;
             errorReader.BeginRead();
         }
 
         public void SubmitInput(string input)
         {
-            pythonProcess.StandardInput.WriteLine(input);
+            SendMessageToPython(new Message("INPUT_RESPONSE", input));
         }
 
-        Regex commandRegex = new Regex(@"^(?<command>\w+?):(?<argument>.*)$", RegexOptions.Singleline);
-
-        private void DataAndCommandReader_CommandReceived(object sender, CommandReceivedEventArgs e)
+        public void SendMessageToPython(Message message)
         {
-            Match match = commandRegex.Match(e.Command);
-            if (match.Success)
+            string raw = message.ToString(includeStartAndEndMarkers: true);
+            pythonProcess.StandardInput.WriteLine(raw);
+        }
+
+        private void OutputReader_MessageReceived(object sender, MessageReceivedEventArgs e)
+        {
+            switch (e.Message.Subject)
             {
-                string command = match.Groups["command"].Value;
-                string argument = match.Groups["argument"].Value;
+                case "INPUT":
+                    OnInput(e.Message.Content);
+                    break;
 
-                switch (command)
-                {
-                    case "INPUT":
-                        OnInput(argument);
-                        break;
-
-                    case "LINE":
-                        OnLine(int.Parse(argument));
-                        break;
-                }
+                case "LINE":
+                    OnLine(int.Parse(e.Message.Content));
+                    break;
             }
         }
 
@@ -176,14 +175,14 @@ namespace MyIDE_WPF.Models
             OnTerminated();
         }
 
-        private void ErrorReader_DataReceived(object sender, DataReceivedEventArgs e)
+        private void ErrorReader_TextReceived(object sender, TextReceivedEventArgs e)
         {
-            OnError(e.Data);
+            OnError(e.Text);
         }
 
-        private void OutputAndCommandReader_DataReceived(object sender, DataReceivedEventArgs e)
+        private void OutputReader_TextReceived(object sender, TextReceivedEventArgs e)
         {
-            OnOutput(e.Data);
+            OnOutput(e.Text);
         }
 
         private void OnError(string errorMessage)

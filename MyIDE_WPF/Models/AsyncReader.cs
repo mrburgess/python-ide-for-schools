@@ -9,23 +9,23 @@ using System.Threading.Tasks;
 
 namespace MyIDE_WPF.Models
 {
-    public class DataReceivedEventArgs : EventArgs
+    public class TextReceivedEventArgs : EventArgs
     {
-        public string Data { get; private set; }
+        public string Text { get; private set; }
 
-        public DataReceivedEventArgs(string data)
+        public TextReceivedEventArgs(string data)
         {
-            this.Data = data;
+            this.Text = data;
         }
     }
 
-    public class CommandReceivedEventArgs : EventArgs
+    public class MessageReceivedEventArgs : EventArgs
     {
-        public string Command { get; private set; }
+        public Message Message { get; private set; }
 
-        public CommandReceivedEventArgs(string command)
+        public MessageReceivedEventArgs(Message message)
         {
-            this.Command = command;
+            this.Message = message;
         }
     }
 
@@ -33,110 +33,148 @@ namespace MyIDE_WPF.Models
     {
         private Stream stream;
         TimeSpan bufferTimeout;
-        private bool processCommands;
-        private char startCommandChar;
-        private char endCommandChar;
+        private bool detectMessages;
 
-        public AsyncReader(Stream stream, TimeSpan bufferTimeout)
+        private const char MessageStartDelimiter = (char)17;
+        private char MessageEndDelimiter = (char)18;
+
+        public AsyncReader(Stream stream, TimeSpan bufferTimeout, bool detectMessages)
         {
             this.stream = stream;
             this.bufferTimeout = bufferTimeout;
-            this.processCommands = false;
+            this.detectMessages = detectMessages;
         }
 
-        public AsyncReader(Stream stream, TimeSpan bufferTimeout, char startCommandChar, char endCommandChar)
+        public event EventHandler<TextReceivedEventArgs> TextReceived;
+
+        public event EventHandler<MessageReceivedEventArgs> MessageReceived;
+
+        private enum State
         {
-            this.stream = stream;
-            this.bufferTimeout = bufferTimeout;
-            this.startCommandChar = startCommandChar;
-            this.endCommandChar = endCommandChar;
-            this.processCommands = true;
+            Text,
+            Message
         }
 
-        public event EventHandler<DataReceivedEventArgs> DataReceived;
+        private void SendText(StringBuilder buffer)
+        {
+            string text = buffer.ToString();
+            buffer.Clear();
+            OnTextReceived(text);
+        }
 
-        public event EventHandler<CommandReceivedEventArgs> CommandReceived;
+        private void SendMessage(StringBuilder buffer)
+        {
+            Message message = Message.Parse(buffer.ToString());
+            buffer.Clear();
+            OnMessageReceived(message);
+        }
 
         public void BeginRead()
         {
             Task.Run(async () =>
             {
-                byte[] buffer = new byte[100000];
-                StringBuilder sbOutput = new StringBuilder(buffer.Length);
-                StringBuilder sbCommand = new StringBuilder(1000);
+                byte[] rawBuffer = new byte[100000];
+                StringBuilder textBuffer = new StringBuilder(rawBuffer.Length);
+                StringBuilder messageBuffer = new StringBuilder(1000);
+                State state = State.Text;
 
-                bool inCommandMode = false;
-
+                // We'll collect text until end-of-line or until the stream dries up
+                // At that point we'll send the text collected so far to the consumer
+                // This means the IDE can show lines that are part complete, for example
+                // when we're waiting for an Input
                 while (true)
                 {
-                    int count = await stream.ReadAsync(buffer, 0, buffer.Length);
+                    // Read as much from the stream as possible (up to the buffer size)
+                    // If there's nothing available, count will be zero
+                    int count = await stream.ReadAsync(rawBuffer, 0, rawBuffer.Length);
 
-                    if (count > 0)
+                    if (count == 0)
                     {
-                        for (int i = 0; i < count; i++)
+                        // Nothing in the stream
+                        // Do we have anything already buffered we could send?
+                        if (textBuffer.Length > 0)
                         {
-                            char c = Convert.ToChar(buffer[i]);
-
-                            if (c == startCommandChar && processCommands)
-                            {
-                                inCommandMode = true;
-                                continue;
-                            }
-                            else if (c == endCommandChar && processCommands)
-                            {
-                                OnCommandReceived(sbCommand.ToString());
-                                sbCommand.Clear();
-                                inCommandMode = false;
-                                continue;
-                            }
-                            else if (inCommandMode)
-                            {
-                                sbCommand.Append(c);
-                                continue;
-                            }
-                            else if (c == '\n')
-                            {
-                                sbOutput.Append(Environment.NewLine);
-                                OnDataReceived(sbOutput.ToString());
-                                sbOutput.Clear();
-                            }
-                            else if (c == '\r')
-                            {
-                                // Just eat it
-                            }
-                            else
-                            {
-                                sbOutput.Append(c);
-                            }
+                            // Send the text from the buffer, then clear it
+                            SendText(textBuffer);
+                        }
+                        else
+                        {
+                            // Input stream has dried up
+                            // Pause slightly before checking again (prevents high CU usage)
+                            await Task.Delay(bufferTimeout);
                         }
                     }
                     else
                     {
-                        await Task.Delay(bufferTimeout);
-                    }
+                        // We picked up some characters from the input stream
+                        // Process each character in turn
+                        for (int i = 0; i < count; i++)
+                        {
+                            char c = Convert.ToChar(rawBuffer[i]);
 
-                    if (sbOutput.Length > 0)
-                    {
-                        OnDataReceived(sbOutput.ToString());
-                        sbOutput.Clear();
+                            // Modify how the character is handled if we're part-way through a message
+                            switch (state)
+                            {
+                                case State.Text:
+                                    if (c == MessageStartDelimiter && detectMessages)
+                                    {
+                                        // We've received the start-of-message signal
+                                        state = State.Message;
+                                    }
+                                    else if (c == '\r')
+                                    {
+                                        // End of line will be \r\n
+                                        // We'll handle the \n and ignore the \r
+                                        // So we don't double up newlines
+                                    }
+                                    else if (c == '\n')
+                                    {
+                                        // End of line
+                                        // Send the text from the buffer, then clear it
+                                        textBuffer.Append(Environment.NewLine);
+                                        SendText(textBuffer);
+                                    }
+                                    else
+                                    {
+                                        // Keep adding the text to our buffer
+                                        // until end of line, or until the stream dries up
+                                        textBuffer.Append(c);
+                                    }
+                                    break;
+
+                                case State.Message:
+                                    if (c == MessageEndDelimiter)
+                                    {
+                                        // We've seen the end-of-message marker
+                                        // Send the current message to the consumer
+                                        state = State.Text;
+                                        SendMessage(messageBuffer);
+                                    }
+                                    else
+                                    {
+                                        messageBuffer.Append(c);
+                                    }
+                                    break;
+                            }
+                        }
                     }
                 }
             });
         }
 
-        private void OnCommandReceived(string command)
+        private void OnMessageReceived(Message message)
         {
-            if (CommandReceived != null)
+            if (MessageReceived != null)
             {
-                CommandReceived(this, new CommandReceivedEventArgs(command));
+                MessageReceived(this, new MessageReceivedEventArgs(message));
             }
         }
 
-        private void OnDataReceived(string data)
+        private void OnTextReceived(string text)
         {
-            if (DataReceived != null)
+            if (TextReceived != null)
             {
-                DataReceived(this, new DataReceivedEventArgs(data));
+                TextReceived(this, new TextReceivedEventArgs(text));
             }
         }
     }
