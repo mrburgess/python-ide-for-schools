@@ -93,9 +93,12 @@ namespace MyIDE_WPF.ViewModels
             // So hide the input box
             ProgramInteraction.HideInputPrompt();
 
-            // Copy the user's answer into the output window
-            ProgramInteraction.OutputText(e.Answer);
-            ProgramInteraction.OutputText(Environment.NewLine);
+            // Copy the prompt and the user's answer into the output window
+            if (!string.IsNullOrWhiteSpace(e.Prompt))
+            {
+                ProgramInteraction.OutputText(e.Prompt.Trim() + " ");
+            }
+            ProgramInteraction.OutputText(e.Answer + Environment.NewLine);
 
             // Submit the user's answer to the Python program, so it can continue
             runner.SubmitInput(e.Answer);
@@ -107,10 +110,6 @@ namespace MyIDE_WPF.ViewModels
             App.Current.Dispatcher.Invoke(() =>
             {
                 // Show the input box to the user, with the appropriate prompt
-                if (!string.IsNullOrWhiteSpace(e.Prompt))
-                {
-                    ProgramInteraction.OutputText(e.Prompt.Trim() + " ");
-                }
                 ProgramInteraction.ShowInputPrompt(
                     !string.IsNullOrWhiteSpace(e.Prompt) ? e.Prompt : "Please enter your response:");
             });

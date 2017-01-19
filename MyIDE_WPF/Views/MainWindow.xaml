@@ -38,9 +38,9 @@
             <Button Content="-" Command="{Binding DecreaseFontSizeCommand}"></Button>
         </StackPanel>
         <v:ProgramCodeView Grid.Row="1" Grid.Column="0" DataContext="{Binding ProgramCode}"
-                           Margin="10,5,5,10" Padding="5" Background="White"/>
+                           Margin="10,5,5,10" Background="White"/>
         <v:ProgramInteractionView Grid.Row="1" Grid.Column="1" DataContext="{Binding ProgramInteraction}"
-                                  Margin="5,5,10,10" Padding="5" Background="White">
+                                  Margin="5,5,10,10" Background="White">
             <v:ProgramInteractionView.Style>
                 <Style TargetType="v:ProgramInteractionView">
                     <Setter Property="Visibility" Value="Visible"/>

@@ -10,7 +10,7 @@ def send_message(subject, content):
 # Define a mechanism to parse messages received from the IDE
 def wait_for_message():
     while True:
-        raw = sys.stdin.readline()
+        raw = sys.stdin.readline().rstrip("\r\n")
         index = raw.find(":")
         if index >= 0:
             subject = raw[0:index]

@@ -167,7 +167,7 @@ namespace MyIDE_WPF.Models
         private void OnLine(int lineNumber)
         {
             // Experimental only...
-            OnOutput($"*** LINE {lineNumber}{Environment.NewLine}");
+            //OnOutput($"*** LINE {lineNumber}{Environment.NewLine}");
         }
 
         private void PythonProcess_Exited(object sender, EventArgs e)
