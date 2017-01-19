@@ -146,7 +146,7 @@ namespace MyIDE_WPF.Models
 
         public void SendMessageToPython(Message message)
         {
-            string raw = message.ToString(includeStartAndEndMarkers: true);
+            string raw = message.ToString(includeStartAndEndMarkers: false);
             pythonProcess.StandardInput.WriteLine(raw);
         }
 
