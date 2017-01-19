@@ -67,6 +67,7 @@
     <Compile Include="Models\AsyncReader.cs" />
     <Compile Include="Models\PythonRunner.cs" />
     <Compile Include="ViewModels\InputViewModel.cs" />
+    <Compile Include="ViewModels\ProgramInteractionViewModel.cs" />
     <Compile Include="ViewModels\ViewModelBase.cs" />
     <Compile Include="ViewModels\MainViewModel.cs" />
     <Compile Include="ViewModels\MyCommand.cs" />
@@ -101,12 +102,11 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="Views\ProgramInteractionView.xaml">
-      <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
     </Page>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="ViewModels\ProgramInteractionViewModel.cs" />
     <Compile Include="Properties\AssemblyInfo.cs">
       <SubType>Code</SubType>
     </Compile>
@@ -127,6 +127,9 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="startup.py" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

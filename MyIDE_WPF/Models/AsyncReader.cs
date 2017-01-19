@@ -94,13 +94,13 @@ namespace MyIDE_WPF.Models
                                 sbCommand.Append(c);
                                 continue;
                             }
-                            else if (c == '\r')
+                            else if (c == '\n')
                             {
                                 sbOutput.Append(Environment.NewLine);
                                 OnDataReceived(sbOutput.ToString());
                                 sbOutput.Clear();
                             }
-                            else if (c == '\n')
+                            else if (c == '\r')
                             {
                                 // Just eat it
                             }

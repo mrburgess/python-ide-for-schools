@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
@@ -78,31 +79,32 @@ namespace MyIDE_WPF.Models
             }
         }
 
-        private string InstrumentCode(string originalCode)
+        private Stream GetResourceStream(string name)
         {
-            StringBuilder sb = new StringBuilder();
-
-            sb.AppendLine("import sys");
-            sb.AppendLine();
-            sb.AppendLine("def my_input(prompt=''):");
-            sb.AppendLine("  print(chr(17) + 'INPUT:' + prompt + chr(18), end='')");
-            sb.AppendLine("  sys.stdout.flush()");
-            sb.AppendLine("  return sys.stdin.readline()");
-            sb.AppendLine();
-            sb.AppendLine("__builtins__.input = my_input");
-            sb.AppendLine();
-            sb.Append(originalCode);
-
-            return sb.ToString();
+            var assembly = Assembly.GetExecutingAssembly();
+            string fullName = assembly.GetName().Name + "." + name;
+            return assembly.GetManifestResourceStream(fullName);
         }
 
         public void BeginRun(string programCode)
         {
-            string instrumentedCode = InstrumentCode(programCode);
+            // Write the startup script to disk
+            // (We do this each time so that people can't fiddle with it)
+            using (Stream stream = GetResourceStream("startup.py"))
+            {
+                using (StreamReader reader = new StreamReader(stream))
+                {
+                    File.WriteAllText("startup.py", reader.ReadToEnd());
+                }
+            }
 
-            File.WriteAllText("temp.py", instrumentedCode);
+                // Write the user's code to disk
+                File.WriteAllText("temp.py", programCode);
 
-            ProcessStartInfo pythonStartInfo = new ProcessStartInfo("python.exe", "-u temp.py")
+            // Launch the statup.py script, which gets everything ready
+            // and then executes the user's code (via exec)
+            // For now, we only support Python 3
+            ProcessStartInfo pythonStartInfo = new ProcessStartInfo("py", "-3 -u startup.py temp.py")
             {
                 RedirectStandardInput = true,
                 RedirectStandardOutput = true,
@@ -137,7 +139,7 @@ namespace MyIDE_WPF.Models
 
         public void SubmitInput(string input)
         {
-            pythonProcess.StandardInput.WriteLine(input.Trim(Environment.NewLine.ToCharArray()));
+            pythonProcess.StandardInput.WriteLine(input);
         }
 
         Regex commandRegex = new Regex(@"^(?<command>\w+?):(?<argument>.*)$", RegexOptions.Singleline);
@@ -150,11 +152,23 @@ namespace MyIDE_WPF.Models
                 string command = match.Groups["command"].Value;
                 string argument = match.Groups["argument"].Value;
 
-                if (command == "INPUT")
+                switch (command)
                 {
-                    OnInput(argument);
+                    case "INPUT":
+                        OnInput(argument);
+                        break;
+
+                    case "LINE":
+                        OnLine(int.Parse(argument));
+                        break;
                 }
             }
+        }
+
+        private void OnLine(int lineNumber)
+        {
+            // Experimental only...
+            OnOutput($"*** LINE {lineNumber}{Environment.NewLine}");
         }
 
         private void PythonProcess_Exited(object sender, EventArgs e)

@@ -12,6 +12,10 @@ namespace MyIDE_WPF.ViewModels
 {
     public class ProgramInteractionViewModel : ViewModelBase
     {
+        public event EventHandler<string> TextAppeded;
+
+        public event EventHandler TextCleared;
+
         public event EventHandler<InputEventArgs> Input;
 
         private void OnInput(string prompt, string answer)
@@ -25,7 +29,7 @@ namespace MyIDE_WPF.ViewModels
         public void ShowInputPrompt(string prompt)
         {
             InputViewModel = new InputViewModel();
-            InputViewModel.Prompt = prompt != "" ? prompt : "Please enter your response";
+            InputViewModel.Prompt = prompt;
             InputViewModel.Input += InputViewModel_Input;
             IsInputActive = true;
         }
@@ -38,21 +42,6 @@ namespace MyIDE_WPF.ViewModels
         private void InputViewModel_Input(object sender, InputEventArgs e)
         {
             OnInput(e.Prompt, e.Answer);
-        }
-
-        private ObservableCollection<string> _lines = new ObservableCollection<string>();
-
-        public ObservableCollection<string> Lines
-        {
-            get
-            {
-                return this._lines;
-            }
-            set
-            {
-                this._lines = value;
-                OnPropertyChanged(nameof(Lines));
-            }
         }
 
         private InputViewModel _inputViewModel;
@@ -72,13 +61,18 @@ namespace MyIDE_WPF.ViewModels
 
         public void Reset()
         {
-            Lines.Clear();
-            atStartOfLine = true;
+            OnTextCleared();
             IsInputActive = false;
             InputViewModel = null;
         }
 
-        private bool atStartOfLine = true;
+        private void OnTextCleared()
+        {
+            if (TextCleared != null)
+            {
+                TextCleared(this, EventArgs.Empty);
+            }
+        }
 
         private bool _isInputActive = false;
 
@@ -95,33 +89,32 @@ namespace MyIDE_WPF.ViewModels
             }
         }
 
+        string mostRecentTextOutput = null;
+
         public void OutputText(string text)
         {
-            bool textIsTerminatedWithNewLine = text.EndsWith(Environment.NewLine);
+            OnTextAppended(text);
+            mostRecentTextOutput = text;
+        }
 
-            if (textIsTerminatedWithNewLine)
+        private void OnTextAppended(string text)
+        {
+            if (TextAppeded != null)
             {
-                text = text.TrimEnd(Environment.NewLine.ToCharArray());
+                TextAppeded(this, text);
             }
-
-            if (atStartOfLine)
-            {
-                // At start of line, so just add a new line
-                _lines.Add(text);
-            }
-            else
-            {
-                // Part way through a line, so append to the last one
-                _lines[_lines.Count - 1] += text;
-            }
-
-            atStartOfLine = textIsTerminatedWithNewLine;
         }
 
         public void OutputErrorMessage(string message)
         {
-            atStartOfLine = true;
-            _lines.Add(message.Trim(Environment.NewLine.ToCharArray()));
+            // Make sure the error message starts on a new line
+            if (!mostRecentTextOutput?.EndsWith(Environment.NewLine) ?? false)
+            {
+                OutputText(Environment.NewLine);
+            }
+
+            // Show the error message
+            OutputText(message);
         }
     }
 }

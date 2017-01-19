@@ -5,35 +5,37 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:local="clr-namespace:MyIDE_WPF.Views"
              xmlns:p="clr-namespace:MyIDE_WPF.Properties"
+             xmlns:icsc="http://icsharpcode.net/sharpdevelop/avalonedit"
              mc:Ignorable="d" 
-             d:DesignHeight="300" d:DesignWidth="300">
+             d:DesignHeight="300" d:DesignWidth="300"
+             Name="myWindow">
     <UserControl.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVis" />
     </UserControl.Resources>
+
     <Grid>
-        <StackPanel>
-            <ScrollViewer ScrollChanged="ScrollViewer_ScrollChanged" VerticalScrollBarVisibility="Hidden">
-                <ItemsControl ItemsSource="{Binding Lines}"
-                          FontFamily="{Binding Source={x:Static p:Settings.Default}, Path=CodeFontFamily, Mode=TwoWay}"
-                          FontSize="{Binding Source={x:Static p:Settings.Default}, Path=CodeFontSize, Mode=TwoWay}">
-                    <ItemsControl.ItemTemplate>
-                        <DataTemplate>
-                            <TextBlock Text="{Binding}" TextWrapping="Wrap">
-                            </TextBlock>
-                        </DataTemplate>
-                    </ItemsControl.ItemTemplate>
-                </ItemsControl>
-            </ScrollViewer>
-            <Grid Visibility="{Binding IsInputActive, Converter={StaticResource BoolToVis}}">
-                <Border BorderBrush="SteelBlue" BorderThickness="2" CornerRadius="5">
-                    <Border.Effect>
-                        <DropShadowEffect ShadowDepth="5" Color="LightGray"/>
-                    </Border.Effect>
-                    <Rectangle Fill="AliceBlue" />
-                </Border>
-                <Border BorderBrush="SteelBlue" BorderThickness="2" CornerRadius="5"/>
-                <local:InputView DataContext="{Binding InputViewModel}"/>
-            </Grid>
-        </StackPanel>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+        <icsc:TextEditor Grid.Row="0"
+                        Name="Console" WordWrap="True"
+                        FontFamily="{Binding Source={x:Static p:Settings.Default}, Path=CodeFontFamily, Mode=TwoWay}"
+                        FontSize="{Binding Source={x:Static p:Settings.Default}, Path=CodeFontSize, Mode=TwoWay}"
+                        IsReadOnly="True" VerticalScrollBarVisibility="Auto"
+                        BorderThickness="0">
+        </icsc:TextEditor>
+        <Grid Grid.Row="1"
+                  Visibility="{Binding IsInputActive, Converter={StaticResource BoolToVis}}"
+                  Margin="10,10,10,10">
+            <Border BorderBrush="SteelBlue" BorderThickness="2" CornerRadius="5">
+                <Border.Effect>
+                    <DropShadowEffect ShadowDepth="5" Color="LightGray"/>
+                </Border.Effect>
+                <Rectangle Fill="AliceBlue" />
+            </Border>
+            <Border BorderBrush="SteelBlue" BorderThickness="2" CornerRadius="5"/>
+            <local:InputView DataContext="{Binding InputViewModel}"/>
+        </Grid>
     </Grid>
 </UserControl>

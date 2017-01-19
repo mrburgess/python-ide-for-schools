@@ -12,6 +12,9 @@
         Height="{Binding Source={x:Static p:Settings.Default}, Path=Height, Mode=TwoWay}"
         Width="{Binding Source={x:Static p:Settings.Default}, Path=Width, Mode=TwoWay}"
         WindowState="{Binding Source={x:Static p:Settings.Default}, Path=WindowState, Mode=TwoWay}" Loaded="Window_Loaded">
+    <Window.InputBindings>
+        <KeyBinding Command="{Binding RunCommand}" Key="F5"/>
+    </Window.InputBindings>
     <Grid Background="WhiteSmoke">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>

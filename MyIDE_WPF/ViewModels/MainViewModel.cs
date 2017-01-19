@@ -93,9 +93,7 @@ namespace MyIDE_WPF.ViewModels
             // So hide the input box
             ProgramInteraction.HideInputPrompt();
 
-            // Copy the prompt and the user's answer into the output window
-            if (e.Prompt != "")
-                ProgramInteraction.OutputText(e.Prompt + " ");
+            // Copy the user's answer into the output window
             ProgramInteraction.OutputText(e.Answer);
             ProgramInteraction.OutputText(Environment.NewLine);
 
@@ -109,8 +107,12 @@ namespace MyIDE_WPF.ViewModels
             App.Current.Dispatcher.Invoke(() =>
             {
                 // Show the input box to the user, with the appropriate prompt
-                // TO DO: Set the input focus to the text box?
-                ProgramInteraction.ShowInputPrompt(e.Prompt);
+                if (!string.IsNullOrWhiteSpace(e.Prompt))
+                {
+                    ProgramInteraction.OutputText(e.Prompt.Trim() + " ");
+                }
+                ProgramInteraction.ShowInputPrompt(
+                    !string.IsNullOrWhiteSpace(e.Prompt) ? e.Prompt : "Please enter your response:");
             });
         }
 
