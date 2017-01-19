@@ -18,6 +18,16 @@ namespace MyIDE_WPF.ViewModels
 
         public event EventHandler<InputEventArgs> Input;
 
+        public event EventHandler ForceRefresh;
+
+        private void OnForceRefresh()
+        {
+            if (ForceRefresh != null)
+            {
+                ForceRefresh(this, EventArgs.Empty);
+            }
+        }
+
         private void OnInput(string prompt, string answer)
         {
             if (Input != null)
@@ -28,6 +38,7 @@ namespace MyIDE_WPF.ViewModels
 
         public void ShowInputPrompt(string prompt)
         {
+            OnForceRefresh();
             InputViewModel = new InputViewModel();
             InputViewModel.Prompt = prompt;
             InputViewModel.Input += InputViewModel_Input;

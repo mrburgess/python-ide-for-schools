@@ -58,6 +58,16 @@ namespace MyIDE_WPF.Views
             {
                 dataContext.TextAppeded += DataContext_TextAppeded;
                 dataContext.TextCleared += DataContext_TextCleared;
+                dataContext.ForceRefresh += DataContext_ForceRefresh;
+            }
+        }
+
+        private void DataContext_ForceRefresh(object sender, EventArgs e)
+        {
+            for (int n = 0; n < 5; n++)
+            {
+                // Simulate a timer tick?!
+                Timer_Tick(this, EventArgs.Empty);
             }
         }
 
