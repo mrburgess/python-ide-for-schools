@@ -34,21 +34,6 @@ namespace MyIDE_WPF.ViewModels
             }
         }
 
-        private bool _isRunning = false;
-
-        public bool IsRunning
-        {
-            get
-            {
-                return this._isRunning;
-            }
-            set
-            {
-                this._isRunning = value;
-                OnPropertyChanged(nameof(IsRunning));
-            }
-        }
-
         private ProgramInteractionViewModel _programInteraction = new ProgramInteractionViewModel();
 
         public ProgramInteractionViewModel ProgramInteraction
@@ -68,6 +53,7 @@ namespace MyIDE_WPF.ViewModels
 
         public MyCommand RunCommand { get; private set; }
         public MyCommand StopCommand { get; private set; }
+        public MyCommand StepCommand { get; private set; }
         public MyCommand IncreaseFontSizeCommand { get; private set; }
         public MyCommand DecreaseFontSizeCommand { get; private set; }
 
@@ -75,16 +61,56 @@ namespace MyIDE_WPF.ViewModels
         {
             RunCommand = new MyCommand((parameter) => Run(), CanRun);
             StopCommand = new MyCommand((parameter) => Stop(), CanStop);
+            StepCommand = new MyCommand((parameter) => Step(), CanStep);
             IncreaseFontSizeCommand = new MyCommand((parameter) => IncreaseFontSize(), CanIncreaseFontSize);
             DecreaseFontSizeCommand = new MyCommand((parameter) => DecreaseFontSize(), CanDecreaseFontSize);
 
             runner = new PythonRunner();
             runner.Output += Runner_OutputReceived;
             runner.Error += Runner_ErrorReceived;
-            runner.Terminated += Runner_Terminated;
-            runner.Input += Runner_Input;
-
+            runner.ExecutionStateChanged += Runner_ExecutionStateChanged;
             ProgramInteraction.Input += ProgramInteraction_Input;
+        }
+
+        private void Runner_ExecutionStateChanged(object sender, ExecutionStateChangedEventArgs e)
+        {
+            App.Current.Dispatcher.Invoke(() =>
+            {
+                switch (e.ExecutionState)
+                {
+                    case ExecutionState.Stopped:
+                        ProgramCode.HighlightedLineNumber = 0;
+                        ProgramInteraction.HideInputPrompt();
+                        break;
+
+                    case ExecutionState.Paused:
+                        ProgramCode.HighlightedLineNumber = runner.LineNumber;
+                        ProgramInteraction.HideInputPrompt();
+                        break;
+
+                    case ExecutionState.Running:
+                        ProgramCode.HighlightedLineNumber = 0;
+                        ProgramInteraction.HideInputPrompt();
+                        break;
+
+                    case ExecutionState.WaitingForInput:
+                        ProgramCode.HighlightedLineNumber = runner.LineNumber;
+                        ProgramInteraction.ShowInputPrompt(
+                            !string.IsNullOrWhiteSpace(runner.Prompt) ? runner.Prompt : "Please enter your response:");
+                        break;
+                }
+
+                RunCommand.RaiseCanExecuteChanged();
+                StepCommand.RaiseCanExecuteChanged();
+                StopCommand.RaiseCanExecuteChanged();
+            });
+        }
+
+        private void Step()
+        {
+            Debug.Assert(runner.ExecutionState == ExecutionState.Paused);
+
+            runner.StepNextLine();
         }
 
         private void ProgramInteraction_Input(object sender, InputEventArgs e)
@@ -93,26 +119,17 @@ namespace MyIDE_WPF.ViewModels
             // So hide the input box
             ProgramInteraction.HideInputPrompt();
 
-            // Copy the prompt and the user's answer into the output window
-            if (!string.IsNullOrWhiteSpace(e.Prompt))
+            // Show the original prompt (if any)
+            if (!string.IsNullOrWhiteSpace(runner.Prompt))
             {
-                ProgramInteraction.OutputText(e.Prompt.Trim() + " ");
+                ProgramInteraction.OutputText(runner.Prompt.Trim() + " ");
             }
+
+            // Show the user's response
             ProgramInteraction.OutputText(e.Answer + Environment.NewLine);
 
             // Submit the user's answer to the Python program, so it can continue
             runner.SubmitInput(e.Answer);
-        }
-
-        private void Runner_Input(object sender, RunnerInputEventArgs e)
-        {
-            // The Python program has requested input from the user
-            App.Current.Dispatcher.Invoke(() =>
-            {
-                // Show the input box to the user, with the appropriate prompt
-                ProgramInteraction.ShowInputPrompt(
-                    !string.IsNullOrWhiteSpace(e.Prompt) ? e.Prompt : "Please enter your response:");
-            });
         }
 
         private int GetNextBiggestFontSize(int currentFontSize)
@@ -155,12 +172,37 @@ namespace MyIDE_WPF.ViewModels
 
         private bool CanStop()
         {
-            return _isRunning;
+            switch (runner.ExecutionState)
+            {
+                case ExecutionState.Running:
+                case ExecutionState.Paused:
+                case ExecutionState.WaitingForInput:
+                    return true;
+                default:
+                    return false;
+            }
         }
 
         private bool CanRun()
         {
-            return !_isRunning;
+            switch (runner.ExecutionState)
+            {
+                case ExecutionState.Stopped:
+                    return true;
+                default:
+                    return false;
+            }
+        }
+
+        private bool CanStep()
+        {
+            switch (runner.ExecutionState)
+            {
+                case ExecutionState.Paused:
+                    return true;
+                default:
+                    return false;
+            }
         }
 
         private void Run()
@@ -176,44 +218,26 @@ namespace MyIDE_WPF.ViewModels
                 ProgramInteraction.Reset();
             }
 
-            _programCode.SyncCodeToViewModel();
-            runner.BeginRun(_programCode.Code);
-
-            IsRunning = runner.IsRunning;
-            _programCode.IsRunning = IsRunning;
-            RunCommand.RaiseCanExecuteChanged();
-            StopCommand.RaiseCanExecuteChanged();
+            ProgramCode.SyncCodeToViewModel();
+            runner.BeginRun(ProgramCode.Code);
 
             // Save the user's code for next time
-            ProgramCode.SyncCodeToViewModel();
             Properties.Settings.Default.Code = ProgramCode.Code;
         }
 
         private void Stop()
         {
-            ProgramInteraction.HideInputPrompt();
             runner.TerminateRun();
         }
 
         private void Runner_OutputReceived(object sender, RunnerOutputEventArgs e)
         {
-            App.Current.Dispatcher.Invoke(() => _programInteraction.OutputText(e.Text));
+            App.Current.Dispatcher.Invoke(() => ProgramInteraction.OutputText(e.Text));
         }
 
         private void Runner_ErrorReceived(object sender, RunnerErrorMessageEventArgs e)
         {
-            App.Current.Dispatcher.Invoke(() => _programInteraction.OutputErrorMessage(e.ErrorMessage));
-        }
-
-        private void Runner_Terminated(object sender, EventArgs e)
-        {
-            App.Current.Dispatcher.Invoke(() =>
-            {
-                IsRunning = runner.IsRunning;
-                _programCode.IsRunning = IsRunning;
-                RunCommand.RaiseCanExecuteChanged();
-                StopCommand.RaiseCanExecuteChanged();
-            });
+            App.Current.Dispatcher.Invoke(() => ProgramInteraction.OutputErrorMessage(e.ErrorMessage));
         }
     }
 }

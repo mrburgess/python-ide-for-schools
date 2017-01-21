@@ -1,5 +1,7 @@
-﻿using System;
+﻿using MyIDE_WPF.Models;
+using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -8,6 +10,8 @@ namespace MyIDE_WPF.ViewModels
 {
     public class ProgramCodeViewModel : ViewModelBase
     {
+        public event PropertyChangedEventHandler SyncRequested;
+
         private string code;
 
         public string Code
@@ -23,23 +27,31 @@ namespace MyIDE_WPF.ViewModels
             }
         }
 
+        private int _highlightedLineNumber = 0;
+
+        public int HighlightedLineNumber
+        {
+            get
+            {
+                return _highlightedLineNumber;
+            }
+            set
+            {
+                _highlightedLineNumber = value;
+                OnPropertyChanged(nameof(HighlightedLineNumber));
+            }
+        }
+
         public void SyncCodeToViewModel()
         {
             OnSyncRequested(nameof(Code));
         }
 
-        private bool isRunning = false;
-
-        public bool IsRunning
+        protected void OnSyncRequested(string propertyName)
         {
-            get
+            if (SyncRequested != null)
             {
-                return this.isRunning;
-            }
-            set
-            {
-                this.isRunning = value;
-                OnPropertyChanged(nameof(IsRunning));
+                SyncRequested(this, new PropertyChangedEventArgs(propertyName));
             }
         }
     }

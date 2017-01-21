@@ -55,6 +55,21 @@ namespace MyIDE_WPF.Views
                 MyEditor.Text = model.Code;
 
                 model.SyncRequested += Model_SyncRequested;
+
+                model.PropertyChanged += Model_PropertyChanged;
+            }
+        }
+
+        private void Model_PropertyChanged(object sender, PropertyChangedEventArgs e)
+        {
+            if (e.PropertyName == "HighlightedLineNumber")
+            {
+                var model = sender as ProgramCodeViewModel;
+                if (model != null)
+                {
+                    MyEditor.ScrollToLine(model.HighlightedLineNumber);
+                    // TO DO: Highlight the line (somehow!)
+                }
             }
         }
 

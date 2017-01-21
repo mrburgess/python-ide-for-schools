@@ -10,6 +10,14 @@ using System.Threading.Tasks;
 
 namespace MyIDE_WPF.Models
 {
+    public enum ExecutionState
+    {
+        Stopped,
+        Running,
+        Paused,
+        WaitingForInput
+    }
+
     public class RunnerOutputEventArgs : EventArgs
     {
         public string Text { get; private set; }
@@ -30,13 +38,15 @@ namespace MyIDE_WPF.Models
         }
     }
 
-    public class RunnerInputEventArgs : EventArgs
+    public class ExecutionStateChangedEventArgs : EventArgs
     {
-        public string Prompt { get; private set; }
+        public ExecutionState ExecutionState { get; private set; }
+        public ExecutionState OldExecutionState { get; private set; }
 
-        public RunnerInputEventArgs(string prompt)
+        public ExecutionStateChangedEventArgs(ExecutionState oldExecutionState, ExecutionState newExecutionState)
         {
-            this.Prompt = prompt;
+            this.ExecutionState = newExecutionState;
+            this.OldExecutionState = oldExecutionState;
         }
     }
 
@@ -44,10 +54,36 @@ namespace MyIDE_WPF.Models
     {
         public event EventHandler<RunnerErrorMessageEventArgs> Error;
         public event EventHandler<RunnerOutputEventArgs> Output;
-        public event EventHandler<EventArgs> Terminated;
-        public event EventHandler<RunnerInputEventArgs> Input;
+        public event EventHandler<ExecutionStateChangedEventArgs> ExecutionStateChanged;
 
         private Process pythonProcess;
+
+        [Obsolete("Use the ExecutionState property instead.")]
+        private ExecutionState _executionState = ExecutionState.Stopped;
+
+        public int LineNumber { get; private set; } = 0;
+
+        public string Prompt { get; private set; } = String.Empty;
+
+        public ExecutionState ExecutionState
+        {
+            get
+            {
+                return _executionState;
+            }
+            set
+            {
+                if (_executionState != value)
+                {
+                    var oldExecutionState = _executionState;
+                    _executionState = value;
+                    if (ExecutionStateChanged != null)
+                    {
+                        ExecutionStateChanged(this, new ExecutionStateChangedEventArgs(oldExecutionState, value));
+                    }
+                }
+            }
+        }
 
         public TimeSpan BufferTimeout { get; set; }
 
@@ -55,8 +91,6 @@ namespace MyIDE_WPF.Models
         {
             BufferTimeout = TimeSpan.FromMilliseconds(100);
         }
-
-        public bool IsRunning { get; private set; }
 
         public void TerminateRun()
         {
@@ -69,16 +103,6 @@ namespace MyIDE_WPF.Models
             }
         }
 
-        private void OnTerminated()
-        {
-            IsRunning = false;
-
-            if (Terminated != null)
-            {
-                Terminated(this, EventArgs.Empty);
-            }
-        }
-
         private Stream GetResourceStream(string name)
         {
             var assembly = Assembly.GetExecutingAssembly();
@@ -88,6 +112,9 @@ namespace MyIDE_WPF.Models
 
         public void BeginRun(string programCode)
         {
+            LineNumber = 0;
+            ExecutionState = ExecutionState.Stopped;
+
             // Write the startup script to disk
             // (We do this each time so that people can't fiddle with it)
             using (Stream stream = GetResourceStream("startup.py"))
@@ -98,8 +125,8 @@ namespace MyIDE_WPF.Models
                 }
             }
 
-                // Write the user's code to disk
-                File.WriteAllText("temp.py", programCode);
+            // Write the user's code to disk
+            File.WriteAllText("temp.py", programCode);
 
             // Launch the statup.py script, which gets everything ready
             // and then executes the user's code (via exec)
@@ -123,7 +150,7 @@ namespace MyIDE_WPF.Models
 
             pythonProcess.Start();
 
-            IsRunning = true;
+            ExecutionState = ExecutionState.Running;
 
             var outputReader = new AsyncReader(
                 pythonProcess.StandardOutput.BaseStream, BufferTimeout, detectMessages:true);
@@ -141,6 +168,9 @@ namespace MyIDE_WPF.Models
 
         public void SubmitInput(string input)
         {
+            Debug.Assert(ExecutionState == ExecutionState.WaitingForInput);
+
+            ExecutionState = ExecutionState.Running;
             SendMessageToPython(new Message("INPUT_RESPONSE", input));
         }
 
@@ -155,57 +185,44 @@ namespace MyIDE_WPF.Models
             switch (e.Message.Subject)
             {
                 case "INPUT":
-                    OnInput(e.Message.Content);
+                    Prompt = e.Message.Content;
+                    ExecutionState = ExecutionState.WaitingForInput;
                     break;
 
                 case "LINE":
-                    OnLine(int.Parse(e.Message.Content));
+                    LineNumber = int.Parse(e.Message.Content);
+                    ExecutionState = ExecutionState.Paused;
                     break;
             }
         }
 
-        private void OnLine(int lineNumber)
+        public void StepNextLine()
         {
-            // Experimental only...
-            //OnOutput($"*** LINE {lineNumber}{Environment.NewLine}");
+            Debug.Assert(ExecutionState == ExecutionState.Paused);
+
+            ExecutionState = ExecutionState.Running;
+            SendMessageToPython(new Message("CONTINUE", ""));
         }
 
         private void PythonProcess_Exited(object sender, EventArgs e)
         {
-            OnTerminated();
+            LineNumber = 0;
+            ExecutionState = ExecutionState.Stopped;
         }
 
         private void ErrorReader_TextReceived(object sender, TextReceivedEventArgs e)
         {
-            OnError(e.Text);
+            if (Error != null)
+            {
+                Error(this, new RunnerErrorMessageEventArgs(e.Text));
+            }
         }
 
         private void OutputReader_TextReceived(object sender, TextReceivedEventArgs e)
         {
-            OnOutput(e.Text);
-        }
-
-        private void OnError(string errorMessage)
-        {
-            if (Error != null)
-            {
-                Error(this, new RunnerErrorMessageEventArgs(errorMessage));
-            }
-        }
-
-        private void OnOutput(string text)
-        {
             if (Output != null)
             {
-                Output(this, new RunnerOutputEventArgs(text));
-            }
-        }
-
-        private void OnInput(string prompt)
-        {
-            if (Input != null)
-            {
-                Input(this, new RunnerInputEventArgs(prompt));
+                Output(this, new RunnerOutputEventArgs(e.Text));
             }
         }
     }

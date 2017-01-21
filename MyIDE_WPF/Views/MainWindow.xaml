@@ -16,6 +16,8 @@
         WindowState="{Binding Source={x:Static p:Settings.Default}, Path=WindowState, Mode=TwoWay}" Loaded="Window_Loaded">
     <Window.InputBindings>
         <KeyBinding Command="{Binding RunCommand}" Key="F5"/>
+        <KeyBinding Command="{Binding StepCommand}" Key="F10"/>
+        <KeyBinding Command="{Binding StepCommand}" Key="F11"/>
     </Window.InputBindings>
     <Grid Background="WhiteSmoke">
         <Grid.RowDefinitions>
@@ -32,10 +34,11 @@
                     <Setter Property="Margin" Value="0,0,10,0"/>
                 </Style>
             </StackPanel.Resources>
-            <Button Content="Run" Command="{Binding RunCommand}"></Button>
+            <Button Content="Start (F5)" Command="{Binding RunCommand}"></Button>
+            <Button Content="Step (F10)" Command="{Binding StepCommand}"></Button>
             <Button Content="Stop" Command="{Binding StopCommand}"></Button>
-            <Button Content="+" Command="{Binding IncreaseFontSizeCommand}"></Button>
-            <Button Content="-" Command="{Binding DecreaseFontSizeCommand}"></Button>
+            <Button Content="Font +" Command="{Binding IncreaseFontSizeCommand}"></Button>
+            <Button Content="Font -" Command="{Binding DecreaseFontSizeCommand}"></Button>
         </StackPanel>
         <v:ProgramCodeView Grid.Row="1" Grid.Column="0" DataContext="{Binding ProgramCode}"
                            Margin="10,5,5,10" Background="White"/>
