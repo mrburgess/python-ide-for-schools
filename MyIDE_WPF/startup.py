@@ -1,6 +1,6 @@
 ﻿import sys
 import time
-import os
+import threading
 
 # Define a mechanism for sending messages to the IDE.
 # ASCII character codes 17 and 18 are used as delimiters
