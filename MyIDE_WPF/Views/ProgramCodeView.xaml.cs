@@ -67,8 +67,14 @@ namespace MyIDE_WPF.Views
                 var model = sender as ProgramCodeViewModel;
                 if (model != null)
                 {
-                    MyEditor.ScrollToLine(model.HighlightedLineNumber);
-                    // TO DO: Highlight the line (somehow!)
+                    foreach (var lt in MyEditor.TextArea.TextView.LineTransformers.OfType<LineColorizer>().ToArray())
+                        MyEditor.TextArea.TextView.LineTransformers.Remove(lt);
+
+                    if (model.HighlightedLineNumber > 0)
+                    {
+                        MyEditor.ScrollToLine(model.HighlightedLineNumber);
+                        MyEditor.TextArea.TextView.LineTransformers.Add(new LineColorizer(model.HighlightedLineNumber));
+                    }
                 }
             }
         }

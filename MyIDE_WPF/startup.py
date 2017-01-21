@@ -1,4 +1,6 @@
 ﻿import sys
+import time
+import os
 
 # Define a mechanism for sending messages to the IDE.
 # ASCII character codes 17 and 18 are used as delimiters
@@ -24,6 +26,8 @@ def wait_for_specific_message(specific_subject):
         (subject, content) = wait_for_message()
         if subject == specific_subject:
             return (subject, content)
+        else:
+            time.sleep(0.1)
 
 # Take control of the "input" function, so we can trigger the UI input box.
 def my_input(prompt=''):

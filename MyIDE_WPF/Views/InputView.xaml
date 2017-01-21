@@ -26,6 +26,11 @@
                 <TextBox.InputBindings>
                     <KeyBinding Command="{Binding SubmitCommand}" Key="Return" />
                 </TextBox.InputBindings>
+                <TextBox.Resources>
+                    <Style TargetType="Border">
+                        <Setter Property="CornerRadius" Value="10"/>
+                    </Style>
+                </TextBox.Resources>
             </TextBox>
         </StackPanel>
     </Grid>
