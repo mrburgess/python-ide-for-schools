@@ -57,9 +57,12 @@ namespace MyIDE_WPF.Models
 
         private void SendText(StringBuilder buffer)
         {
-            string text = buffer.ToString();
-            buffer.Clear();
-            OnTextReceived(text);
+            if (buffer.Length > 0)
+            {
+                string text = buffer.ToString();
+                buffer.Clear();
+                OnTextReceived(text);
+            }
         }
 
         private void SendMessage(StringBuilder buffer)
@@ -132,7 +135,6 @@ namespace MyIDE_WPF.Models
                                         // End of line
                                         // Send the text from the buffer, then clear it
                                         textBuffer.Append(Environment.NewLine);
-                                        SendText(textBuffer);
                                     }
                                     else
                                     {
@@ -157,6 +159,8 @@ namespace MyIDE_WPF.Models
                                     break;
                             }
                         }
+
+                        SendText(textBuffer);
                     }
                 }
             });

@@ -110,6 +110,8 @@ namespace MyIDE_WPF.Models
             return assembly.GetManifestResourceStream(fullName);
         }
 
+        private AsyncReader outputReader;
+
         public void BeginRun(string programCode)
         {
             LineNumber = 0;
@@ -152,7 +154,7 @@ namespace MyIDE_WPF.Models
 
             ExecutionState = ExecutionState.Running;
 
-            var outputReader = new AsyncReader(
+            outputReader = new AsyncReader(
                 pythonProcess.StandardOutput.BaseStream, BufferTimeout, detectMessages:true);
 
             outputReader.TextReceived += OutputReader_TextReceived;
@@ -196,7 +198,7 @@ namespace MyIDE_WPF.Models
             }
         }
 
-        public void StepNextLine()
+        public void ExecuteNextLine()
         {
             Debug.Assert(ExecutionState == ExecutionState.Paused);
 

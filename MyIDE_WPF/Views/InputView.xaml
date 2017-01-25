@@ -25,6 +25,7 @@
                      Focusable="True">
                 <TextBox.InputBindings>
                     <KeyBinding Command="{Binding SubmitCommand}" Key="Return" />
+                    <KeyBinding Command="{Binding SubmitCommand}" Key="F5" />
                 </TextBox.InputBindings>
                 <TextBox.Resources>
                     <Style TargetType="Border">

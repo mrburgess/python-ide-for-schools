@@ -51,25 +51,46 @@ namespace MyIDE_WPF.ViewModels
 
         private PythonRunner runner;
 
-        public MyCommand RunCommand { get; private set; }
+        public MyCommand GoCommand { get; private set; }
         public MyCommand StopCommand { get; private set; }
-        public MyCommand StepCommand { get; private set; }
         public MyCommand IncreaseFontSizeCommand { get; private set; }
         public MyCommand DecreaseFontSizeCommand { get; private set; }
 
         public MainViewModel()
         {
-            RunCommand = new MyCommand((parameter) => Run(), CanRun);
-            StopCommand = new MyCommand((parameter) => Stop(), CanStop);
-            StepCommand = new MyCommand((parameter) => Step(), CanStep);
-            IncreaseFontSizeCommand = new MyCommand((parameter) => IncreaseFontSize(), CanIncreaseFontSize);
-            DecreaseFontSizeCommand = new MyCommand((parameter) => DecreaseFontSize(), CanDecreaseFontSize);
+            GoCommand = new MyCommand(p => Go(), CanGo);
+            StopCommand = new MyCommand(p => Stop(), CanStop);
+            IncreaseFontSizeCommand = new MyCommand(p => IncreaseFontSize(), CanIncreaseFontSize);
+            DecreaseFontSizeCommand = new MyCommand(p => DecreaseFontSize(), CanDecreaseFontSize);
 
             runner = new PythonRunner();
             runner.Output += Runner_OutputReceived;
             runner.Error += Runner_ErrorReceived;
             runner.ExecutionStateChanged += Runner_ExecutionStateChanged;
             ProgramInteraction.Input += ProgramInteraction_Input;
+        }
+
+        public ExecutionState ExecutionState
+        {
+            get
+            {
+                return runner.ExecutionState;
+            }
+        }
+
+        private bool _singleStepMode;
+
+        public bool SingleStepMode
+        {
+            get
+            {
+                return _singleStepMode;
+            }
+            set
+            {
+                _singleStepMode = value;
+                OnPropertyChanged(nameof(SingleStepMode));
+            }
         }
 
         private void Runner_ExecutionStateChanged(object sender, ExecutionStateChangedEventArgs e)
@@ -84,33 +105,39 @@ namespace MyIDE_WPF.ViewModels
                         break;
 
                     case ExecutionState.Paused:
-                        ProgramCode.HighlightedLineNumber = runner.LineNumber;
-                        ProgramInteraction.HideInputPrompt();
+                        if (SingleStepMode)
+                        {
+                            ProgramCode.HighlightedLineNumber = runner.LineNumber;
+                            ProgramInteraction.HideInputPrompt();
+                        }
+                        else
+                        {
+                            // Want to run at full speed
+                            runner.ExecuteNextLine();
+                        }
                         break;
 
                     case ExecutionState.Running:
-                        ProgramCode.HighlightedLineNumber = 0;
-                        ProgramInteraction.HideInputPrompt();
+                        if (SingleStepMode)
+                        {
+                            ProgramCode.HighlightedLineNumber = 0;
+                            ProgramInteraction.HideInputPrompt();
+                        }
                         break;
 
                     case ExecutionState.WaitingForInput:
-                        ProgramCode.HighlightedLineNumber = runner.LineNumber;
-                        ProgramInteraction.ShowInputPrompt(
-                            !string.IsNullOrWhiteSpace(runner.Prompt) ? runner.Prompt : "Please enter your response:");
+                        ProgramInteraction.ShowInputPrompt(!string.IsNullOrWhiteSpace(runner.Prompt) ? runner.Prompt : "Please enter your response:");
+                        if (SingleStepMode)
+                        {
+                            ProgramCode.HighlightedLineNumber = runner.LineNumber;
+                        }
                         break;
                 }
 
-                RunCommand.RaiseCanExecuteChanged();
-                StepCommand.RaiseCanExecuteChanged();
+                OnPropertyChanged(nameof(ExecutionState));
+                GoCommand.RaiseCanExecuteChanged();
                 StopCommand.RaiseCanExecuteChanged();
             });
-        }
-
-        private void Step()
-        {
-            Debug.Assert(runner.ExecutionState == ExecutionState.Paused);
-
-            runner.StepNextLine();
         }
 
         private void ProgramInteraction_Input(object sender, InputEventArgs e)
@@ -183,10 +210,11 @@ namespace MyIDE_WPF.ViewModels
             }
         }
 
-        private bool CanRun()
+        private bool CanGo()
         {
             switch (runner.ExecutionState)
             {
+                case ExecutionState.Paused:
                 case ExecutionState.Stopped:
                     return true;
                 default:
@@ -194,35 +222,20 @@ namespace MyIDE_WPF.ViewModels
             }
         }
 
-        private bool CanStep()
+        private void Go()
         {
-            switch (runner.ExecutionState)
+            if (runner.ExecutionState == ExecutionState.Stopped)
             {
-                case ExecutionState.Paused:
-                    return true;
-                default:
-                    return false;
-            }
-        }
-
-        private void Run()
-        {
-            runner.TerminateRun();
-
-            if (ProgramInteraction == null)
-            {
-                ProgramInteraction = new ProgramInteractionViewModel();
-            }
-            else
-            {
+                // Need to start the program...
                 ProgramInteraction.Reset();
+                ProgramCode.SyncCodeToViewModel();
+                runner.BeginRun(ProgramCode.Code);
+                Properties.Settings.Default.Code = ProgramCode.Code; // Save for next time
             }
-
-            ProgramCode.SyncCodeToViewModel();
-            runner.BeginRun(ProgramCode.Code);
-
-            // Save the user's code for next time
-            Properties.Settings.Default.Code = ProgramCode.Code;
+            else if (runner.ExecutionState == ExecutionState.Paused)
+            {
+                runner.ExecuteNextLine();
+            }
         }
 
         private void Stop()

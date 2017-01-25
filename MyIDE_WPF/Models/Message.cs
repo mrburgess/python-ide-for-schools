@@ -26,7 +26,7 @@ namespace MyIDE_WPF.Models
         public Message(string subject, string content)
         {
             this.Subject = subject;
-            this.Content = content;
+            this.Content = content ?? string.Empty;
         }
 
         public string ToString(bool includeStartAndEndMarkers)

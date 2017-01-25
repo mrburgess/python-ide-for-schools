@@ -6,6 +6,7 @@
         xmlns:local="clr-namespace:MyIDE_WPF"
         xmlns:v="clr-namespace:MyIDE_WPF.Views"
         xmlns:vm="clr-namespace:MyIDE_WPF.ViewModels"
+        xmlns:m="clr-namespace:MyIDE_WPF.Models"
         xmlns:p="clr-namespace:MyIDE_WPF.Properties"
         mc:Ignorable="d"
         Title="MainWindow"
@@ -15,9 +16,7 @@
         FontSize="{Binding Source={x:Static p:Settings.Default}, Path=CodeFontSize}"
         WindowState="{Binding Source={x:Static p:Settings.Default}, Path=WindowState, Mode=TwoWay}" Loaded="Window_Loaded">
     <Window.InputBindings>
-        <KeyBinding Command="{Binding RunCommand}" Key="F5"/>
-        <KeyBinding Command="{Binding StepCommand}" Key="F10"/>
-        <KeyBinding Command="{Binding StepCommand}" Key="F11"/>
+        <KeyBinding Command="{Binding GoCommand}" Key="F5"/>
     </Window.InputBindings>
     <Grid Background="WhiteSmoke">
         <Grid.RowDefinitions>
@@ -34,26 +33,17 @@
                     <Setter Property="Margin" Value="0,0,10,0"/>
                 </Style>
             </StackPanel.Resources>
-            <Button Content="Start (F5)" Command="{Binding RunCommand}"></Button>
-            <Button Content="Step (F10)" Command="{Binding StepCommand}"></Button>
+            <Button Content="Go (F5)" Command="{Binding GoCommand}"></Button>
             <Button Content="Stop" Command="{Binding StopCommand}"></Button>
             <Button Content="Font +" Command="{Binding IncreaseFontSizeCommand}"></Button>
             <Button Content="Font -" Command="{Binding DecreaseFontSizeCommand}"></Button>
+            <CheckBox Content="Single Step" IsChecked="{Binding SingleStepMode}"></CheckBox>
         </StackPanel>
         <v:ProgramCodeView Grid.Row="1" Grid.Column="0" DataContext="{Binding ProgramCode}"
-                           Margin="10,5,5,10" Background="White"/>
+                           Margin="10,5,5,10" Background="White" BorderThickness="1" BorderBrush="LightGray">
+        </v:ProgramCodeView>
         <v:ProgramInteractionView Grid.Row="1" Grid.Column="1" DataContext="{Binding ProgramInteraction}"
-                                  Margin="5,5,10,10" Background="White">
-            <v:ProgramInteractionView.Style>
-                <Style TargetType="v:ProgramInteractionView">
-                    <Setter Property="Visibility" Value="Visible"/>
-                    <Style.Triggers>
-                        <DataTrigger Binding="{Binding .}" Value="{x:Null}">
-                            <Setter Property="Visibility" Value="Hidden"/>
-                        </DataTrigger>
-                    </Style.Triggers>
-                </Style>
-            </v:ProgramInteractionView.Style>
+                                  Margin="5,5,10,10" Background="White" BorderThickness="1" BorderBrush="LightGray">
         </v:ProgramInteractionView>
     </Grid>
 </Window>
