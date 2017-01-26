@@ -94,5 +94,29 @@ namespace MyIDE_WPF.Properties {
                 this["Code"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("*")]
+        public global::System.Windows.GridLength SplitterLeft {
+            get {
+                return ((global::System.Windows.GridLength)(this["SplitterLeft"]));
+            }
+            set {
+                this["SplitterLeft"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("*")]
+        public global::System.Windows.GridLength SplitterRight {
+            get {
+                return ((global::System.Windows.GridLength)(this["SplitterRight"]));
+            }
+            set {
+                this["SplitterRight"] = value;
+            }
+        }
     }
 }

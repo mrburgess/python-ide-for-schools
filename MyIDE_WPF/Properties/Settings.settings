@@ -20,5 +20,11 @@
     <Setting Name="Code" Type="System.String" Scope="User">
       <Value Profile="(Default)">print("Hello")</Value>
     </Setting>
+    <Setting Name="SplitterLeft" Type="System.Windows.GridLength" Scope="User">
+      <Value Profile="(Default)">*</Value>
+    </Setting>
+    <Setting Name="SplitterRight" Type="System.Windows.GridLength" Scope="User">
+      <Value Profile="(Default)">*</Value>
+    </Setting>
   </Settings>
 </SettingsFile>
