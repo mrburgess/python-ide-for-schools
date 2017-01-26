@@ -9,10 +9,10 @@
       <Value Profile="(Default)">14</Value>
     </Setting>
     <Setting Name="Width" Type="System.Int32" Scope="User">
-      <Value Profile="(Default)">400</Value>
+      <Value Profile="(Default)">800</Value>
     </Setting>
     <Setting Name="Height" Type="System.Int32" Scope="User">
-      <Value Profile="(Default)">300</Value>
+      <Value Profile="(Default)">500</Value>
     </Setting>
     <Setting Name="WindowState" Type="System.String" Scope="User">
       <Value Profile="(Default)">Normal</Value>

@@ -49,7 +49,7 @@ namespace MyIDE_WPF.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("400")]
+        [global::System.Configuration.DefaultSettingValueAttribute("800")]
         public int Width {
             get {
                 return ((int)(this["Width"]));
@@ -61,7 +61,7 @@ namespace MyIDE_WPF.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("300")]
+        [global::System.Configuration.DefaultSettingValueAttribute("500")]
         public int Height {
             get {
                 return ((int)(this["Height"]));

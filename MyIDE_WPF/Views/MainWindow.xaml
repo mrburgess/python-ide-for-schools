@@ -10,11 +10,10 @@
         xmlns:p="clr-namespace:MyIDE_WPF.Properties"
         xmlns:t="clr-namespace:ToggleSwitch;assembly=ToggleSwitch"
         mc:Ignorable="d"
-        Title="MainWindow"
+        Title="Python IDE for Schools"
+        FontSize="16"
         Height="{Binding Source={x:Static p:Settings.Default}, Path=Height, Mode=TwoWay}"
         Width="{Binding Source={x:Static p:Settings.Default}, Path=Width, Mode=TwoWay}"
-        FontFamily="{Binding Source={x:Static p:Settings.Default}, Path=CodeFontFamily}"
-        FontSize="{Binding Source={x:Static p:Settings.Default}, Path=CodeFontSize}"
         WindowState="{Binding Source={x:Static p:Settings.Default}, Path=WindowState, Mode=TwoWay}" Loaded="Window_Loaded">
     <Window.InputBindings>
         <KeyBinding Command="{Binding GoCommand}" Key="F5"/>
@@ -26,37 +25,57 @@
         </Grid.RowDefinitions>
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="5"/>
             <ColumnDefinition Width="*"/>
         </Grid.ColumnDefinitions>
 
-        <Grid Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2" Margin="11,12,9,2.5">
+        <Grid Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="3" Margin="10,10,10,5">
             <StackPanel Grid.Column="0" Orientation="Horizontal">
-                <Button Command="{Binding GoCommand}" Margin="0,0,0,0">
-                    <Button.Style>
-                        <Style TargetType="Button">
-                            <Setter Property="Content" Value="Run (F5)"/>
-                            <Style.Triggers>
-                                <DataTrigger Binding="{Binding SingleStepMode}" Value="true">
-                                    <Setter Property="Content" Value="Step (F5)"/>
-                                </DataTrigger>
-                            </Style.Triggers>
-                        </Style>
-                    </Button.Style>
+                <Button Command="{Binding GoCommand}" Margin="0,0,0,0" MinWidth="110" HorizontalContentAlignment="Left" Padding="5,0,0,0">
+                    <StackPanel Orientation="Horizontal">
+                        <Image Source="../Images/Start-icon.png"/>
+                        <Label>
+                            <Label.Style>
+                                <Style TargetType="Label">
+                                    <Setter Property="Content" Value="Run (F5)"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding SingleStepMode}" Value="true">
+                                            <Setter Property="Content" Value="Step (F5)"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Label.Style>
+                        </Label>
+                    </StackPanel>
                 </Button>
-                <Button Content="Stop" Command="{Binding StopCommand}" Margin="10,0,0,0"></Button>
+                <Button Command="{Binding StopCommand}" Margin="10,0,0,0" MinWidth="110" HorizontalContentAlignment="Left" Padding="5,0,0,0">
+                    <StackPanel Orientation="Horizontal">
+                        <Image Source="../Images/Stop-red-icon.png"/>
+                        <Label Content="Stop"/>
+                    </StackPanel>
+                </Button>
                 <Label Margin="10,0,0,0">Single Step Mode</Label>
                 <t:HorizontalToggleSwitch IsChecked="{Binding SingleStepMode, Mode=TwoWay}"/>
             </StackPanel>
             <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right">
-                <Button Content="Font +" Command="{Binding IncreaseFontSizeCommand}" Margin="0,0,0,0"></Button>
-                <Button Content="Font -" Command="{Binding DecreaseFontSizeCommand}" Margin="10,0,0,0"></Button>
+                <Button Command="{Binding IncreaseFontSizeCommand}" Margin="0,0,0,0" MinWidth="30">
+                    <Label FontSize="22" FontWeight="Heavy" Padding="0">A</Label>
+                </Button>
+                <Button Command="{Binding DecreaseFontSizeCommand}" Margin="10,0,0,0" MinWidth="30">
+                    <Label FontSize="12" FontWeight="Heavy" Padding="0">A</Label>
+                </Button>
             </StackPanel>
         </Grid>
         <v:ProgramCodeView Grid.Row="1" Grid.Column="0" DataContext="{Binding ProgramCode}"
-                           Margin="10,5,5,10" Background="White" BorderThickness="1" BorderBrush="LightGray">
+                           Margin="10,5,5,10" Background="White" BorderThickness="1" BorderBrush="LightGray"
+                           FontFamily="{Binding Source={x:Static p:Settings.Default}, Path=CodeFontFamily}"
+                           FontSize="{Binding Source={x:Static p:Settings.Default}, Path=CodeFontSize}">
         </v:ProgramCodeView>
-        <v:ProgramInteractionView Grid.Row="1" Grid.Column="1" DataContext="{Binding ProgramInteraction}"
-                                  Margin="5,5,10,10" Background="White" BorderThickness="1" BorderBrush="LightGray">
+        <GridSplitter Grid.Row="1" Grid.Column="1" Width="5" HorizontalAlignment="Stretch"/>
+        <v:ProgramInteractionView Grid.Row="1" Grid.Column="2" DataContext="{Binding ProgramInteraction}"
+                                  Margin="5,5,10,10" Background="White" BorderThickness="1" BorderBrush="LightGray"
+                                  FontFamily="{Binding Source={x:Static p:Settings.Default}, Path=CodeFontFamily}"
+                                  FontSize="{Binding Source={x:Static p:Settings.Default}, Path=CodeFontSize}">
         </v:ProgramInteractionView>
     </Grid>
 </Window>
