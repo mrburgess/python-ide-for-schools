@@ -8,6 +8,7 @@
         xmlns:vm="clr-namespace:MyIDE_WPF.ViewModels"
         xmlns:m="clr-namespace:MyIDE_WPF.Models"
         xmlns:p="clr-namespace:MyIDE_WPF.Properties"
+        xmlns:t="clr-namespace:ToggleSwitch;assembly=ToggleSwitch"
         mc:Ignorable="d"
         Title="MainWindow"
         Height="{Binding Source={x:Static p:Settings.Default}, Path=Height, Mode=TwoWay}"
@@ -27,18 +28,30 @@
             <ColumnDefinition Width="*"/>
             <ColumnDefinition Width="*"/>
         </Grid.ColumnDefinitions>
-        <StackPanel Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2" Orientation="Horizontal" Margin="10,10,10,5">
-            <StackPanel.Resources>
-                <Style TargetType="Button">
-                    <Setter Property="Margin" Value="0,0,10,0"/>
-                </Style>
-            </StackPanel.Resources>
-            <Button Content="Go (F5)" Command="{Binding GoCommand}"></Button>
-            <Button Content="Stop" Command="{Binding StopCommand}"></Button>
-            <Button Content="Font +" Command="{Binding IncreaseFontSizeCommand}"></Button>
-            <Button Content="Font -" Command="{Binding DecreaseFontSizeCommand}"></Button>
-            <CheckBox Content="Single Step" IsChecked="{Binding SingleStepMode}"></CheckBox>
-        </StackPanel>
+
+        <Grid Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2" Margin="11,12,9,2.5">
+            <StackPanel Grid.Column="0" Orientation="Horizontal">
+                <Button Command="{Binding GoCommand}" Margin="0,0,0,0">
+                    <Button.Style>
+                        <Style TargetType="Button">
+                            <Setter Property="Content" Value="Run (F5)"/>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding SingleStepMode}" Value="true">
+                                    <Setter Property="Content" Value="Step (F5)"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Button.Style>
+                </Button>
+                <Button Content="Stop" Command="{Binding StopCommand}" Margin="10,0,0,0"></Button>
+                <Label Margin="10,0,0,0">Single Step Mode</Label>
+                <t:HorizontalToggleSwitch IsChecked="{Binding SingleStepMode, Mode=TwoWay}"/>
+            </StackPanel>
+            <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right">
+                <Button Content="Font +" Command="{Binding IncreaseFontSizeCommand}" Margin="0,0,0,0"></Button>
+                <Button Content="Font -" Command="{Binding DecreaseFontSizeCommand}" Margin="10,0,0,0"></Button>
+            </StackPanel>
+        </Grid>
         <v:ProgramCodeView Grid.Row="1" Grid.Column="0" DataContext="{Binding ProgramCode}"
                            Margin="10,5,5,10" Background="White" BorderThickness="1" BorderBrush="LightGray">
         </v:ProgramCodeView>
